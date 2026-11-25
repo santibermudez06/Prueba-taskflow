@@ -37,14 +37,17 @@ def login(datos: dict, db: Session = Depends(get_db)):
             detail="Correo y contraseña son obligatorios"
         )
 
-    # VULNERABLE: el correo se concatena directamente en la consulta SQL
-    consulta = text(f"""
+    # Consulta parametrizada para evitar SQL Injection
+    consulta = text("""
         SELECT id, name, email, password_hash
         FROM users
-        WHERE LOWER(email) = '{email}'
+        WHERE LOWER(email) = :email
     """)
 
-    usuario = db.execute(consulta).mappings().first()
+    usuario = db.execute(
+        consulta,
+        {"email": email}
+    ).mappings().first()
 
     if not usuario:
         raise HTTPException(
